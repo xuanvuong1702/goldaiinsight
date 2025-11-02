@@ -30,10 +30,10 @@ export default function Header() {
             {/* Logo */}
             <div  className="flex items-center gap-2 flex-shrink-0">
               <div className="w-6 h-6 bg-gradient-to-br from-blue-500 to-blue-600 rounded flex items-center justify-center">
-                <TrendingUp className="w-4 h-4 text-white" />
+                <TrendingUp className="w-4 h-4 text-white " />
               </div>
               <span className="text-sm font-bold text-slate-900 dark:text-white hidden sm:inline">
-                CoinMarketCap
+                Vàng hôm nay
               </span>
             </div>
   

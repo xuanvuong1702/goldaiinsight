@@ -1,4 +1,3 @@
-import Header from "../components/Header";
 import Header1 from "../components/Header1";
 import MarketStats from "../components/MarketStat";
 import TrendingCryptos from "../components/TrendingCrypto";
@@ -14,10 +13,10 @@ export default function Index() {
         {/* Page Header */}
         <div className="mb-12">
           <h1 className="text-4xl font-bold text-slate-900 dark:text-white mb-2">
-            Cryptocurrency Market
+            Vàng Hôm Nay
           </h1>
           <p className="text-lg text-slate-600 dark:text-slate-400">
-            Monitor real-time prices and market data for cryptocurrencies
+          Theo dõi  giá và thị trường vàng theo thời gian thực
           </p>
         </div>
 

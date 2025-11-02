@@ -9,7 +9,7 @@ interface StatCard {
 
 const stats: StatCard[] = [
   {
-    label: "Global Market Cap",
+    label: "Giá vàng thế giới",
     value: "2.15",
     change: 2.5,
     unit: "T",

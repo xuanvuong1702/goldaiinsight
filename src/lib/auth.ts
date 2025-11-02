@@ -45,7 +45,6 @@ export interface AuthTokens {
    * Retrieve access token from localStorage
    */
   export const getAccessToken = (): string | null => {
-    debugger
     return localStorage.getItem(ACCESS_TOKEN_KEY);
   };
   
@@ -61,7 +60,6 @@ export interface AuthTokens {
    */
   export const isAccessTokenExpired = (): boolean => {
     const expiry = localStorage.getItem(TOKEN_EXPIRY_KEY);
-    debugger
     if (!expiry) return true;
     return Date.now() > new Date(expiry).getTime();
   };
