@@ -1,17 +1,19 @@
 export interface AuthTokens {
     accessToken: string;
     refreshToken: string;
-    expiresIn: number;
+    expiresIn: Date;
   }
   
   export interface AuthUser {
-    id: string;
+    userId: string;
     email: string;
     name?: string;
+    iat: number;
+    exp: number;
   }
   
   export interface DecodedToken {
-    sub: string;
+    userId: string;
     email: string;
     name?: string;
     iat: number;
@@ -36,13 +38,14 @@ export interface AuthTokens {
   export const storeTokens = (tokens: AuthTokens) => {
     localStorage.setItem(ACCESS_TOKEN_KEY, tokens.accessToken);
     localStorage.setItem(REFRESH_TOKEN_KEY, tokens.refreshToken);
-    localStorage.setItem(TOKEN_EXPIRY_KEY, (Date.now() + tokens.expiresIn * 1000).toString());
+    localStorage.setItem(TOKEN_EXPIRY_KEY, tokens.expiresIn.toString());
   };
   
   /**
    * Retrieve access token from localStorage
    */
   export const getAccessToken = (): string | null => {
+    debugger
     return localStorage.getItem(ACCESS_TOKEN_KEY);
   };
   
@@ -58,8 +61,9 @@ export interface AuthTokens {
    */
   export const isAccessTokenExpired = (): boolean => {
     const expiry = localStorage.getItem(TOKEN_EXPIRY_KEY);
+    debugger
     if (!expiry) return true;
-    return Date.now() > parseInt(expiry);
+    return Date.now() > new Date(expiry).getTime();
   };
   
   /**
@@ -91,16 +95,21 @@ export interface AuthTokens {
    * Extract user info from stored access token
    */
   export const getStoredUser = (): AuthUser | null => {
+
     const token = getAccessToken();
     if (!token) return null;
   
     const decoded = decodeToken(token);
+
     if (!decoded || decoded.type !== "access") return null;
+
   
     return {
-      id: decoded.sub,
+      userId: decoded.userId,
       email: decoded.email,
       name: decoded.name,
+      exp: decoded.exp,
+      iat: decoded.iat  
     };
   };
   

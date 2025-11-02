@@ -1,5 +1,6 @@
 import { createContext, useContext, useState, useEffect, useCallback } from "react";
-import { AuthUser, getStoredUser, getAccessToken, clearTokens, isAccessTokenExpired } from "../../lib/auth";
+import { AuthUser, getStoredUser, getAccessToken, clearTokens, isAccessTokenExpired,storeTokens, getRefreshToken } from "../../lib/auth";
+
 
 interface AuthContextType {
   user: AuthUser | null;
@@ -11,6 +12,16 @@ interface AuthContextType {
   refreshToken: () => Promise<void>;
 }
 
+interface AuthData {
+  accessToken: string;
+  refreshToken: string;
+  user: AuthUser; // in seconds,
+  success: boolean;
+  message: string;
+  expiresAt: Date;
+  createdAt: Date;
+}
+
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
@@ -18,16 +29,28 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  // Initialize auth state from stored token
+  // Initialize auth state from stored token on component mount
   useEffect(() => {
     const initializeAuth = () => {
       try {
-        if (getAccessToken() && !isAccessTokenExpired()) {
-          const storedUser = getStoredUser();
-          setUser(storedUser);
-        } else if (getAccessToken()) {
-          // Token expired, clear it
+        const accessToken = getAccessToken();
+
+        if (!accessToken) {
+          setIsLoading(false);
+          return;
+        }
+
+        // Check if token is expired
+        if (isAccessTokenExpired()) {
           clearTokens();
+          setIsLoading(false);
+          return;
+        }
+
+        // Token is valid, restore user from it
+        const storedUser = getStoredUser();
+        if (storedUser) {
+          setUser(storedUser);
         }
       } catch (err) {
         console.error("Error initializing auth:", err);
@@ -52,44 +75,56 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
 
     return () => clearInterval(checkTokenExpiry);
   }, [user]);
+  
 
   const login = useCallback(async (email: string, password: string) => {
     setIsLoading(true);
     setError(null);
 
-    debugger
-
     try {
 
-      const headers = new Headers();
-
-      headers.append("Content-Type", "application/json");
-
+      const myHeaders = new Headers();
+      myHeaders.append("Content-Type", "application/json");
+  
       const raw = JSON.stringify({
-        "email": email,
-        "password": password
+        email: email,
+        password: password,
       });
-
-      const response = await fetch("https://phungxuanvuong97.app.n8n.cloud/webhook/login", {
+  
+      const requestOptions = {
         method: "POST",
-        headers: headers,
+        headers: myHeaders,
         body: raw,
-      });
+        redirect: "follow",
+      };
+  
+      const response = await fetch("https://phungxuanvuong97.app.n8n.cloud/webhook/login", requestOptions as RequestInit);
 
-      if (!response.ok) {
-        const data = await response.text();
-        throw new Error(data.error || "Login failed");
+      const text = await response.text();
+
+      if (!text) throw new Error("Empty response from server");
+      let authData: AuthData;
+      try {
+        authData = JSON.parse(text);
+      } catch {
+        throw new Error("Invalid JSON returned: " + text);
       }
 
-      const data = await response.json();
+      if(authData.success === false){
+        throw new Error(authData.message || "Login failed");
+      }
       
-      // Store tokens and update user
-      localStorage.setItem("auth_access_token", data.accessToken);
-      localStorage.setItem("auth_refresh_token", data.refreshToken);
-      localStorage.setItem("auth_token_expiry", (Date.now() + data.expiresIn * 1000).toString());
+      // Store tokens using the utility function
+      storeTokens({
+        accessToken: authData.accessToken,
+        refreshToken: authData.refreshToken,
+        expiresIn: authData.expiresAt,
+      });
 
       const storedUser = getStoredUser();
+      
       setUser(storedUser);
+
     } catch (err) {
       const message = err instanceof Error ? err.message : "Login failed";
       setError(message);
@@ -107,11 +142,17 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
 
   const refreshToken = useCallback(async () => {
     try {
-      const response = await fetch("https://phungxuanvuong97.app.n8n.cloud/webhook/refresh", {
+      const currentRefreshToken = getRefreshToken();
+
+      if (!currentRefreshToken) {
+        throw new Error("No refresh token available");
+      }
+
+      const response = await fetch("/api/refresh", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          refreshToken: localStorage.getItem("auth_refresh_token"),
+          refreshToken: currentRefreshToken,
         }),
       });
 
@@ -121,8 +162,13 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       }
 
       const data = await response.json();
-      localStorage.setItem("auth_access_token", data.accessToken);
-      localStorage.setItem("auth_token_expiry", (Date.now() + data.expiresIn * 1000).toString());
+
+      // Store the new access token (refresh token stays the same)
+      storeTokens({
+        accessToken: data.accessToken,
+        refreshToken: currentRefreshToken,
+        expiresIn: data.expiresIn,
+      });
 
       const storedUser = getStoredUser();
       setUser(storedUser);
@@ -133,6 +179,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     }
   }, [logout]);
 
+  
   const value: AuthContextType = {
     user,
     isAuthenticated: !!user,
@@ -153,3 +200,4 @@ export const useAuth = () => {
   }
   return context;
 };
+
