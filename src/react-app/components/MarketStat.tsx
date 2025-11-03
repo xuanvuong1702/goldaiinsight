@@ -1,3 +1,4 @@
+import React, { useEffect, useState } from "react";
 import { ArrowUpRight, ArrowDownRight } from "lucide-react";
 
 interface StatCard {
@@ -7,34 +8,97 @@ interface StatCard {
   unit?: string;
 }
 
-const stats: StatCard[] = [
-  {
-    label: "Giá vàng thế giới",
-    value: "2.15",
-    change: 2.5,
-    unit: "T",
-  },
-  {
-    label: "24h Volume",
-    value: "145.2",
-    change: -1.2,
-    unit: "B",
-  },
-  {
-    label: "BTC Dominance",
-    value: "48.5",
-    change: 0.8,
-    unit: "%",
-  },
-  {
-    label: "ETH Price",
-    value: "2,450",
-    change: 5.3,
-    unit: "$",
-  },
-];
+type GoldApiResponse = {
+  currentPrice: string;
+  previousDayPrice: string;
+  thirtyAgoPrice: string;
+  sixMonthAgoPrice: string;
+  todayPercentage: string; // e.g. "+0.66%"
+  thirtyPercentage: string;
+  sixMonthPercentage: string;
+};
+
+function formatNumber(value?: string) {
+  if (!value) return "—";
+  const n = Number(value);
+  if (Number.isNaN(n)) return value;
+  return n.toLocaleString(undefined, { maximumFractionDigits: 2 });
+}
+
+function parsePercentString(p?: string) {
+  if (!p) return 0;
+  const cleaned = p.replace("%", "").replace("+", "");
+  const n = Number(cleaned);
+  return Number.isNaN(n) ? 0 : n;
+}
 
 export default function MarketStats() {
+  const [gold, setGold] = useState<GoldApiResponse | null>(null);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    let mounted = true;
+    const fetchGold = async () => {
+      setLoading(true);
+      setError(null);
+      try {
+        
+
+       const myHeaders = new Headers();
+      myHeaders.append("Content-Type", "application/json");
+
+  
+      const requestOptions = {
+        method: "POST",
+        headers: myHeaders,
+        redirect: "follow",
+      };
+  
+      const res = await fetch("https://phungxuanvuong97.app.n8n.cloud/webhook/gold-performance", requestOptions as RequestInit);
+
+
+        debugger
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        const data = (await res.json()) as GoldApiResponse;
+        if (mounted) setGold(data);
+      } catch (err: any) {
+        if (mounted) setError(err?.message ?? "Failed to load");
+      } finally {
+        if (mounted) setLoading(false);
+      }
+    };
+
+    fetchGold();
+
+    return () => {
+      mounted = false;
+    };
+  }, []);
+
+  const stats: StatCard[] = [
+    {
+      label: "Giá hiện tại",
+      value: gold ? formatNumber(gold.currentPrice) : loading ? "Loading..." : "—",
+      change: gold ? parsePercentString(gold.todayPercentage) : 0,
+    },
+    {
+      label: "1 ngày trước",
+      value: gold ? formatNumber(gold.previousDayPrice) : loading ? "Loading..." : "—",
+      change: gold ? parsePercentString(gold.todayPercentage) : 0,
+    },
+    {
+      label: "1 tháng trước",
+      value: gold ? formatNumber(gold.thirtyAgoPrice) : loading ? "Loading..." : "—",
+      change: gold ? parsePercentString(gold.thirtyPercentage) : 0,
+    },
+    {
+      label: "6 tháng trước",
+      value: gold ? formatNumber(gold.sixMonthAgoPrice) : loading ? "Loading..." : "—",
+      change: gold ? parsePercentString(gold.sixMonthPercentage) : 0,
+    },
+  ];
+
   return (
     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
       {stats.map((stat) => (
@@ -46,9 +110,8 @@ export default function MarketStats() {
             {stat.label}
           </p>
           <div className="flex items-center justify-between">
-            <p className="text-2xl font-bold text-slate-900 dark:text-white">
+            <p className="text-xl font-bold text-slate-900 dark:text-white">
               {stat.value}
-              {stat.unit && <span className="text-lg ml-1">{stat.unit}</span>}
             </p>
             <div
               className={`flex items-center gap-1 ${
@@ -67,6 +130,10 @@ export default function MarketStats() {
           </div>
         </div>
       ))}
+
+      {/* {error && (
+        <div className="col-span-full text-sm text-red-500 mt-2">Error loading gold data: {error}</div>
+      )} */}
     </div>
   );
 }

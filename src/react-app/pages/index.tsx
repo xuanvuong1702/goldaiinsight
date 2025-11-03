@@ -13,7 +13,7 @@ export default function Index() {
         {/* Page Header */}
         <div className="mb-12">
           <h1 className="text-4xl font-bold text-slate-900 dark:text-white mb-2">
-            Vàng Hôm Nay
+            Thị trường thế giới
           </h1>
           <p className="text-lg text-slate-600 dark:text-slate-400">
           Theo dõi  giá và thị trường vàng theo thời gian thực
@@ -34,10 +34,10 @@ export default function Index() {
         <section>
           <div className="mb-6">
             <h2 className="text-xl font-bold text-slate-900 dark:text-white">
-              Top Cryptocurrencies
+              Giá vàng theo cửa hàng
             </h2>
             <p className="text-sm text-slate-600 dark:text-slate-400 mt-1">
-              View the top 100 cryptocurrencies by market capitalization
+              The dõi giá vàng theo top 20 cửa hàng lớn nhất cả nước
             </p>
           </div>
           <CryptoTable />
@@ -173,7 +173,7 @@ export default function Index() {
           </div>
           <div className="border-t border-slate-200 dark:border-slate-800 pt-8">
             <p className="text-center text-sm text-slate-600 dark:text-slate-400">
-              © 2024 CryptoHub. All rights reserved.
+              © 2025 GoldAIInsight. All rights reserved.
             </p>
           </div>
         </footer>

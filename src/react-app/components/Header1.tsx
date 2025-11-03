@@ -10,17 +10,13 @@ export default function Header() {
     const { user, isAuthenticated, logout } = useAuth();
   
     const navigationItems = [
-      { label: "Cryptocurrencies", href: "/" },
-      { label: "Dashboards", href: "#" },
-      { label: "Portfolio", href: "#" },
-      { label: "Exchanges", href: "#" },
-      { label: "Community", href: "#" },
-      { label: "Products", href: "#" },
+      { label: "Biểu đồ", href: "/" },
+      { label: "Tin tức", href: "#" },
+      { label: "Đầu tư", href: "#" },
     ];
   
     const rightItems = [
-      { label: "Portfolio", href: "#" },
-      { label: "Watchlist", href: "#" },
+      { label: "Watchlist", href: "#" }
     ];
   
     return (
@@ -33,7 +29,7 @@ export default function Header() {
                 <TrendingUp className="w-4 h-4 text-white " />
               </div>
               <span className="text-sm font-bold text-slate-900 dark:text-white hidden sm:inline">
-                Vàng hôm nay
+                Thị trường vàng
               </span>
             </div>
   
