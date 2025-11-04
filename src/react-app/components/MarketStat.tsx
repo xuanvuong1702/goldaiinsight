@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import { ArrowUpRight, ArrowDownRight } from "lucide-react";
 
 interface StatCard {
@@ -131,9 +131,9 @@ export default function MarketStats() {
         </div>
       ))}
 
-      {/* {error && (
+      {error && (
         <div className="col-span-full text-sm text-red-500 mt-2">Error loading gold data: {error}</div>
-      )} */}
+      )}
     </div>
   );
 }
