@@ -1,3 +1,4 @@
+import GoldChart from "./GoldChart";
 import MarketStats from "./MarketStat";
 import { Search } from "lucide-react";
 
@@ -8,7 +9,7 @@ export default function GoldLayout() {
       <aside className="lg:col-span-3">
         <div className="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 p-6 sticky top-6">
           <h3 className="text-lg font-bold text-slate-900 dark:text-white mb-4">Performance</h3>
-          {/* <MarketStats /> */}
+          <MarketStats />
         </div>
       </aside>
 
@@ -33,10 +34,11 @@ export default function GoldLayout() {
 
           <div className="h-96 flex items-center justify-center text-slate-400 dark:text-slate-500 border border-dashed border-slate-100 dark:border-slate-800 rounded-md">
             {/* Chart placeholder - integrate chart library here */}
-            <div className="text-center">
+            <GoldChart></GoldChart>
+            {/* <div className="text-center">
               <div className="text-xl font-semibold text-slate-700 dark:text-white">Chart area</div>
               <div className="text-sm mt-2">Kết nối với API để vẽ biểu đồ giá vàng</div>
-            </div>
+            </div> */}
           </div>
 
           <div className="mt-4 grid grid-cols-2 gap-3">
