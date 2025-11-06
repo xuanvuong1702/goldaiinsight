@@ -1,7 +1,6 @@
 // src/App.tsx
 
 import "./App.css";
-import Index from "./pages";
 import { AuthProvider } from "./context/AuthContext";
 import Dashboards1 from "./components/Dashboard1";
 

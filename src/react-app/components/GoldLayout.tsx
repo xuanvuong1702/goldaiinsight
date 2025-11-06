@@ -145,8 +145,8 @@ export default function GoldLayout() {
                   data={data as ChartPoint[]}
                   vnLabel="Giá vàng VN (VND)"
                   worldLabel="Giá vàng Thế giới (VND)"
-                  yAxisLeftLabel="VND"
-                  yAxisRightLabel="VND"
+                  //yAxisLeftLabel="VND"
+                  //yAxisRightLabel="VND"
                 />
               )}
               {!loading && !error && !hasData && (

@@ -1,10 +1,9 @@
 import Header from "./Header1";
-import { useAuth } from "../context/AuthContext";
 import { BarChart3, TrendingUp, Wallet, Activity } from "lucide-react";
 import GoldLayout from "./GoldLayout";
 
 export default function Dashboards1() {
-  const { user } = useAuth();
+  //const { user } = useAuth();
 
   const dashboardCards = [
     {

@@ -1,5 +1,5 @@
 // GoldPriceChart.jsx
-import React, { useMemo } from 'react';
+import { useMemo } from 'react';
 import {
   ResponsiveContainer,
   LineChart,
@@ -34,10 +34,6 @@ function formatDateShort(iso: any) {
   return d.toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
 }
 
-// find entry in data where entry.date === iso
-function findByDate(dataMap: any, iso: any) {
-  return dataMap.get(iso) || null;
-}
 
 // given a targetDate (Date object), find the closest entry on or before that date
 function getClosestOnOrBefore(dataArray: any, targetDate: any) {
@@ -138,7 +134,7 @@ function CustomTooltip({ active, payload, label, dataSorted }: any) {
   );
 }
 
-export default function GoldPriceChart({ data = [], vnLabel = 'Giá vàng VN (VND)', worldLabel = 'Giá vàng Thế giới (USD)' }) {
+export default function GoldPriceChart({ data = [] , vnLabel = 'Giá vàng VN (VND)', worldLabel = 'Giá vàng Thế giới (USD)' }) {
   // Ensure data sorted ascending by date
   const dataSorted = useMemo(() => {
     const copy = [...data];
@@ -146,12 +142,12 @@ export default function GoldPriceChart({ data = [], vnLabel = 'Giá vàng VN (VN
     return copy;
   }, [data]);
 
-  // Build a Map for quick exact-date lookup if needed
-  const dataMap = useMemo(() => {
-    const m = new Map();
-    dataSorted.forEach((d : any) => m.set(d.date, d));
-    return m;
-  }, [dataSorted]);
+//   // Build a Map for quick exact-date lookup if needed
+//   const dataMap = useMemo(() => {
+//     const m = new Map();
+//     dataSorted.forEach((d : any) => m.set(d.date, d));
+//     return m;
+//   }, [dataSorted]);
 
   // Provide default domain for Y axes to look nice
   const worldValues = dataSorted.map((d: any) => d.world).filter(v => v != null);
