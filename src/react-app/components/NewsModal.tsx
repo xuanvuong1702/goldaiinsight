@@ -1,10 +1,14 @@
 import { useEffect, useState } from "react";
 import { X } from "lucide-react";
+import ReactMarkdown from "react-markdown";
+import remarkGfm from "remark-gfm";
+import rehypeSanitize from "rehype-sanitize";
 
 type Article = {
   title: string;
   source?: string;
   time?: string;
+  content?: string;
 };
 
 type CommentItem = {
@@ -83,9 +87,19 @@ export default function NewsModal({ open, onClose, article }: { open: boolean; o
         </div>
 
         <div className="p-4 max-h-[60vh] overflow-auto space-y-4">
-          <div className="prose prose-sm dark:prose-invert text-slate-700 dark:text-slate-200">
-            <p>Không có nội dung chi tiết cho mục tin này. Dưới đây là khu vực bình luận cho phép người dùng thêm ý kiến của họ.</p>
-          </div>
+          {article.content ? (
+            <ReactMarkdown
+              // className="prose prose-sm dark:prose-invert text-slate-700 dark:text-slate-200"
+              remarkPlugins={[remarkGfm]}
+              rehypePlugins={[rehypeSanitize]}
+            >
+              {article.content}
+            </ReactMarkdown>
+          ) : (
+            <div className="prose prose-sm dark:prose-invert text-slate-700 dark:text-slate-200">
+              <p>Không có nội dung chi tiết cho mục tin này. Dưới đây là khu vực bình luận cho phép người dùng thêm ý kiến của họ.</p>
+            </div>
+          )}
 
           <div>
             <div className="mb-2 text-sm font-medium text-slate-700 dark:text-white">Bình luận</div>

@@ -116,15 +116,15 @@ function CustomTooltip({ active, payload, label, dataSorted }: any) {
 
       <div>
         <div style={{ fontWeight: 600 }}>Giá Thế giới</div>
-        <div>Hiện tại: {formatNumber(current.world)} USD</div>
+        <div>Hiện tại: {formatNumber(current.world)} VND</div>
         <div>
-          Hôm trước: {prevEntry ? `${formatNumber(prevEntry.world)} USD` : '-'}
+          Hôm trước: {prevEntry ? `${formatNumber(prevEntry.world)} VND` : '-'}
           {worldChangePrev.abs != null && (
             <span> → {worldChangePrev.abs >= 0 ? '+' : ''}{formatNumber(worldChangePrev.abs)} ({worldChangePrev.pct != null ? `${worldChangePrev.pct.toFixed(2)}%` : '—'})</span>
           )}
         </div>
         <div>
-          30 ngày trước: {entry30 ? `${formatNumber(entry30.world)} USD` : '-'}
+          30 ngày trước: {entry30 ? `${formatNumber(entry30.world)} VND` : '-'}
           {worldChange30.abs != null && (
             <span> → {worldChange30.abs >= 0 ? '+' : ''}{formatNumber(worldChange30.abs)} ({worldChange30.pct != null ? `${worldChange30.pct.toFixed(2)}%` : '—'})</span>
           )}
@@ -134,7 +134,7 @@ function CustomTooltip({ active, payload, label, dataSorted }: any) {
   );
 }
 
-export default function GoldPriceChart({ data = [] , vnLabel = 'Giá vàng VN (VND)', worldLabel = 'Giá vàng Thế giới (USD)' }) {
+export default function GoldPriceChart({ data = [] , vnLabel = 'Giá vàng VN (VND)', worldLabel = 'Giá vàng Thế giới (VND)' }) {
   // Ensure data sorted ascending by date
   const dataSorted = useMemo(() => {
     const copy = [...data];
@@ -179,7 +179,7 @@ export default function GoldPriceChart({ data = [] , vnLabel = 'Giá vàng VN (V
             orientation="right"
             tickFormatter={(v) => v}
             domain={[Math.floor(worldMin * 0.98), Math.ceil(worldMax * 1.02)]}
-            label={{ value: 'USD', angle: -90, position: 'insideRight', offset: 8 }}
+            label={{ value: 'VND', angle: -90, position: 'insideRight', offset: 8 }}
           />
 
           <Tooltip content={<CustomTooltip dataSorted={dataSorted} />} />

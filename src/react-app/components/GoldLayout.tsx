@@ -49,7 +49,7 @@ export default function GoldLayout() {
         
 
         const myHeaders = new Headers();
-      myHeaders.append("Content-Type", "application/json");
+        myHeaders.append("Content-Type", "application/json");
 
   
       const requestOptions = {
@@ -161,13 +161,26 @@ export default function GoldLayout() {
       <aside className="lg:col-span-3">
         <div className="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 p-6 sticky top-6">
           <h3 className="text-lg font-bold text-slate-900 dark:text-white mb-4">Tin tức & Nhiệt tình</h3>
-
+          
           <div className="space-y-4">
             {[
               {
                 title: "Vàng tăng do lo ngại lạm phát",
                 source: "Reuters",
                 time: "2 giờ trước",
+                content: `A paragraph with *emphasis* and **strong importance**.
+
+> A block quote with ~strikethrough~ and a URL: https://reactjs.org.
+
+* Lists
+* [ ] todo
+* [x] done
+
+A table:
+
+| a | b |
+| - | - |
+` 
               },
               {
                 title: "Thị trường vàng ổn định trước quyết định lãi suất",
