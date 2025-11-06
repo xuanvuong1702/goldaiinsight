@@ -23,24 +23,24 @@ function formatNumber(n) {
   return n.toLocaleString('en-US', { maximumFractionDigits: 2 });
 }
 
-function parseDateISO(iso) {
+function parseDateISO(iso: any) {
   // iso expected 'YYYY-MM-DD'
   const [y, m, d] = iso.split('-').map(Number);
   return new Date(y, m - 1, d);
 }
 
-function formatDateShort(iso) {
+function formatDateShort(iso: any) {
   const d = parseDateISO(iso);
   return d.toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
 }
 
 // find entry in data where entry.date === iso
-function findByDate(dataMap, iso) {
+function findByDate(dataMap: any, iso: any) {
   return dataMap.get(iso) || null;
 }
 
 // given a targetDate (Date object), find the closest entry on or before that date
-function getClosestOnOrBefore(dataArray, targetDate) {
+function getClosestOnOrBefore(dataArray: any, targetDate: any) {
   // dataArray is expected sorted ascending by date (ensure via caller)
   for (let i = dataArray.length - 1; i >= 0; i--) {
     const itemDate = parseDateISO(dataArray[i].date);
@@ -49,7 +49,7 @@ function getClosestOnOrBefore(dataArray, targetDate) {
   return null;
 }
 
-function getDateMinusDays(iso, days) {
+function getDateMinusDays(iso: any, days: any) {
   const d = parseDateISO(iso);
   d.setDate(d.getDate() - days);
   const yyyy = d.getFullYear();
@@ -58,13 +58,13 @@ function getDateMinusDays(iso, days) {
   return `${yyyy}-${mm}-${dd}`;
 }
 
-function CustomTooltip({ active, payload, label, dataSorted }) {
+function CustomTooltip({ active, payload, label, dataSorted }: any) {
   if (!active || !payload || payload.length === 0) return null;
 
   // label is date string
   const date = label;
   // current entry values
-  const current = payload.reduce((acc, p) => {
+  const current = payload.reduce((acc: any, p: any) => {
     acc[p.dataKey] = p.value;
     return acc;
   }, {});
@@ -77,7 +77,7 @@ function CustomTooltip({ active, payload, label, dataSorted }) {
   const prevEntry = getClosestOnOrBefore(dataSorted, parseDateISO(prevIso));
   const entry30 = getClosestOnOrBefore(dataSorted, parseDateISO(target30Iso));
 
-  const calcChange = (now, before) => {
+  const calcChange = (now: any, before: any) => {
     if (now == null || before == null) return { abs: null, pct: null };
     const abs = now - before;
     const pct = before === 0 ? null : (abs / before) * 100;
@@ -142,20 +142,20 @@ export default function GoldPriceChart({ data = [], vnLabel = 'Giá vàng VN (VN
   // Ensure data sorted ascending by date
   const dataSorted = useMemo(() => {
     const copy = [...data];
-    copy.sort((a, b) => parseDateISO(a.date) - parseDateISO(b.date));
+    copy.sort((a: any, b: any) => parseDateISO(a.date).getTime() - parseDateISO(b.date).getTime());
     return copy;
   }, [data]);
 
   // Build a Map for quick exact-date lookup if needed
   const dataMap = useMemo(() => {
     const m = new Map();
-    dataSorted.forEach(d => m.set(d.date, d));
+    dataSorted.forEach((d : any) => m.set(d.date, d));
     return m;
   }, [dataSorted]);
 
   // Provide default domain for Y axes to look nice
-  const worldValues = dataSorted.map(d => d.world).filter(v => v != null);
-  const vnValues = dataSorted.map(d => d.vn).filter(v => v != null);
+  const worldValues = dataSorted.map((d: any) => d.world).filter(v => v != null);
+  const vnValues = dataSorted.map((d: any) => d.vn).filter(v => v != null);
 
   const worldMin = worldValues.length ? Math.min(...worldValues) : 0;
   const worldMax = worldValues.length ? Math.max(...worldValues) : 100;
