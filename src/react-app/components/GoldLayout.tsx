@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import GoldPriceChart from "./GoldPriceChart";
 import MarketStats from "./MarketStat";
-import { Search } from "lucide-react";
+import { Search, ArrowUp, ArrowDown } from "lucide-react";
 import NewsModal from "./NewsModal";
 
 const API_URL = "https://phungxuanvuong97.app.n8n.cloud/webhook/chart-data";
@@ -49,7 +49,7 @@ export default function GoldLayout() {
         
 
         const myHeaders = new Headers();
-        myHeaders.append("Content-Type", "application/json");
+      myHeaders.append("Content-Type", "application/json");
 
   
       const requestOptions = {
@@ -102,6 +102,159 @@ export default function GoldLayout() {
     setModalOpen(false);
     setSelectedArticle(null);
   };
+
+  // --- News items + voting/tab state ---
+  type NewsItem = {
+    id: string;
+    title: string;
+    source?: string;
+    time?: string; // legacy display
+    createdAt: string; // ISO
+  };
+
+  const initialItems: NewsItem[] = [
+    {
+      id: "news-1",
+      title: "Vàng tăng do lo ngại lạm phát",
+      source: "Reuters",
+      time: "2 giờ trước",
+      createdAt: new Date(Date.now() - 2 * 60 * 60 * 1000).toISOString(),
+    },
+    {
+      id: "news-2",
+      title: "Thị trường vàng ổn định trước quyết định lãi suất",
+      source: "Bloomberg",
+      time: "6 giờ trước",
+      createdAt: new Date(Date.now() - 6 * 60 * 60 * 1000).toISOString(),
+    },
+    {
+      id: "news-3",
+      title: "Tweet: Giá vàng có thể tiếp tục tăng",
+      source: "@goldlover",
+      time: "10 giờ trước",
+      createdAt: new Date(Date.now() - 10 * 60 * 60 * 1000).toISOString(),
+    },
+  ];
+
+  const [items, setItems] = useState<NewsItem[]>(initialItems);
+  const [tab, setTab] = useState<"top" | "newest">("top");
+
+  type VotesMap = Record<string, { up: number; down: number }>;
+  type UserVotesMap = Record<string, "up" | "down" | null>;
+
+  const [votes, setVotes] = useState<VotesMap>({});
+  const [userVotes, setUserVotes] = useState<UserVotesMap>({});
+
+  const STORAGE_KEY = "news_votes_v1";
+
+  useEffect(() => {
+    try {
+      const raw = localStorage.getItem(STORAGE_KEY);
+      if (raw) {
+        const parsed = JSON.parse(raw);
+        setVotes(parsed.votes || {});
+        setUserVotes(parsed.userVotes || {});
+      } else {
+        // initialize counts to zero for items
+        const init: VotesMap = {};
+        initialItems.forEach((it) => (init[it.id] = { up: 0, down: 0 }));
+        setVotes(init);
+      }
+    } catch (e) {
+      // ignore
+    }
+  }, []);
+
+  useEffect(() => {
+    try {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify({ votes, userVotes }));
+    } catch (e) {
+      // ignore
+    }
+  }, [votes, userVotes]);
+
+  function toggleVote(id: string, type: "up" | "down") {
+    setVotes((prev) => {
+      const cur = prev[id] ?? { up: 0, down: 0 };
+      const user = userVotes[id] ?? null;
+      const next = { ...prev };
+      const nv = { up: cur.up, down: cur.down };
+
+      if (user === type) {
+        // remove vote
+        if (type === "up") nv.up = Math.max(0, nv.up - 1);
+        else nv.down = Math.max(0, nv.down - 1);
+        next[id] = nv;
+        setUserVotes((uv) => ({ ...uv, [id]: null }));
+        return next;
+      }
+
+      if (user === null || user === undefined) {
+        // add vote
+        if (type === "up") nv.up += 1;
+        else nv.down += 1;
+      } else {
+        // switch vote
+        if (type === "up") {
+          nv.up += 1;
+          nv.down = Math.max(0, nv.down - 1);
+        } else {
+          nv.down += 1;
+          nv.up = Math.max(0, nv.up - 1);
+        }
+      }
+      next[id] = nv;
+      setUserVotes((uv) => ({ ...uv, [id]: type }));
+      return next;
+    });
+  }
+
+  function timeAgo(iso: string) {
+    const then = new Date(iso).getTime();
+    const diff = Math.floor((Date.now() - then) / 1000);
+    if (diff < 60) return `${diff} giây trước`;
+    const m = Math.floor(diff / 60);
+    if (m < 60) return `${m} phút trước`;
+    const h = Math.floor(m / 60);
+    if (h < 24) return `${h} giờ trước`;
+    const d = Math.floor(h / 24);
+    return `${d} ngày trước`;
+  }
+
+  const sortedItems = useMemo(() => {
+    const withScore = items.map((it) => ({
+      ...it,
+      score: (votes[it.id]?.up ?? 0) - (votes[it.id]?.down ?? 0),
+    }));
+    if (tab === "top") {
+      return withScore.sort((a, b) => (b.score - a.score) || (new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()));
+    }
+    return withScore.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+  }, [items, votes, tab]);
+
+  const PER_PAGE = 3;
+  const [currentPage, setCurrentPage] = useState(1);
+
+  const totalPages = Math.max(1, Math.ceil(sortedItems.length / PER_PAGE));
+
+  // visible items for current page
+  const visibleItems = sortedItems.slice((currentPage - 1) * PER_PAGE, currentPage * PER_PAGE);
+
+  function goToPage(n: number) {
+    const p = Math.min(Math.max(1, Math.floor(n)), totalPages);
+    setCurrentPage(p);
+  }
+  function prevPage() {
+    setCurrentPage((p) => Math.max(1, p - 1));
+  }
+  function nextPage() {
+    setCurrentPage((p) => Math.min(totalPages, p + 1));
+  }
+
+  // reset page when tab changes
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [tab, totalPages]);
 
   return (
     <section className="grid grid-cols-1 lg:grid-cols-12 gap-6 mb-8">
@@ -161,52 +314,91 @@ export default function GoldLayout() {
       <aside className="lg:col-span-3">
         <div className="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 p-6 sticky top-6">
           <h3 className="text-lg font-bold text-slate-900 dark:text-white mb-4">Tin tức & Nhiệt tình</h3>
-          
-          <div className="space-y-4">
-            {[
-              {
-                title: "Vàng tăng do lo ngại lạm phát",
-                source: "Reuters",
-                time: "2 giờ trước",
-                content: `A paragraph with *emphasis* and **strong importance**.
 
-> A block quote with ~strikethrough~ and a URL: https://reactjs.org.
-
-* Lists
-* [ ] todo
-* [x] done
-
-A table:
-
-| a | b |
-| - | - |
-` 
-              },
-              {
-                title: "Thị trường vàng ổn định trước quyết định lãi suất",
-                source: "Bloomberg",
-                time: "6 giờ trước",
-              },
-              {
-                title: "Tweet: Giá vàng có thể tiếp tục tăng",
-                source: "@goldlover",
-                time: "10 giờ trước",
-              },
-            ].map((item) => (
+          <div>
+            {/* Tabs: Top / Newest */}
+            <div className="flex items-center justify-center gap-2 bg-slate-50 dark:bg-slate-800 p-1 rounded-md mb-4 w-full">
               <button
-                key={item.title}
                 type="button"
-                onClick={() => openArticle(item)}
-                className="w-full text-left p-3 bg-slate-50 dark:bg-slate-800 rounded-md hover:shadow-sm"
+                className={`px-3 py-1 rounded-md text-sm ${tab === "top" ? "bg-white dark:bg-slate-900 shadow" : "text-slate-600 dark:text-slate-300"}`}
+                onClick={() => setTab("top")}
               >
-                <p className="text-sm font-medium text-slate-900 dark:text-white">{item.title}</p>
-                <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">{item.source} · {item.time}</p>
+                Top
               </button>
-            ))}
+              <button
+                type="button"
+                className={`px-3 py-1 rounded-md text-sm ${tab === "newest" ? "bg-white dark:bg-slate-900 shadow" : "text-slate-600 dark:text-slate-300"}`}
+                onClick={() => setTab("newest")}
+              >
+                Mới nhất
+              </button>
+            </div>
+
+            <div className="space-y-3">
+              {visibleItems.map((it) => (
+                <div key={it.id} className="w-full p-3 bg-slate-50 dark:bg-slate-800 rounded-md hover:shadow-sm">
+                  <div className="flex items-start justify-between">
+                    <div className="flex-1 text-left">
+                      <p className="text-sm font-medium text-slate-900 dark:text-white" onClick={() => openArticle(it)}>{it.title}</p>
+                      <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">{it.source} · {timeAgo(it.createdAt)}</p>
+
+                      <div className="flex items-center gap-2 ml-3">
+                      <button
+                        onClick={() => toggleVote(it.id, "up")}
+                        className={`p-1 rounded-md ${userVotes[it.id] === "up" ? "bg-green-100 text-green-700" : "text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-700"}`}
+                        aria-label="Upvote"
+                      >
+                        <ArrowUp className="w-4 h-4" />
+                      </button>
+                      <div className="text-sm text-slate-700 dark:text-slate-200">{votes[it.id]?.up ?? 0}</div>
+
+                      <button
+                        onClick={() => toggleVote(it.id, "down")}
+                        className={`p-1 rounded-md ${userVotes[it.id] === "down" ? "bg-red-100 text-red-700" : "text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-700"}`}
+                        aria-label="Downvote"
+                      >
+                        <ArrowDown className="w-4 h-4" />
+                      </button>
+                      <div className="text-sm text-slate-700 dark:text-slate-200">{votes[it.id]?.down ?? 0}</div>
+                    </div>
+                    </div>
+
+                    
+                  </div>
+                </div>
+              ))}
+
+              {items.length === 0 && <div className="text-sm text-slate-500">Không có tin tức nào.</div>}
+            </div>
           </div>
 
           <div className="mt-4 text-center">
-            <button className="px-4 py-2 rounded-md bg-slate-100 dark:bg-slate-800 text-sm">Xem thêm</button>
+            <div className="inline-flex items-center gap-2">
+              <button onClick={prevPage} disabled={currentPage === 1} className={`px-2 py-1 rounded-md text-sm ${currentPage === 1 ? "text-slate-300" : "bg-slate-100 dark:bg-slate-800"}`}>
+                Prev
+              </button>
+
+              <nav aria-label="Pagination" className="inline-flex gap-1">
+                {Array.from({ length: totalPages }).map((_, i) => {
+                  const page = i + 1;
+                  return (
+                    <button
+                      key={page}
+                      onClick={() => goToPage(page)}
+                      className={`px-2 py-1 rounded-md text-sm ${page === currentPage ? "bg-white dark:bg-slate-900 shadow" : "text-slate-600 dark:text-slate-300"}`}
+                    >
+                      {page}
+                    </button>
+                  );
+                })}
+              </nav>
+
+              <button onClick={nextPage} disabled={currentPage === totalPages} className={`px-2 py-1 rounded-md text-sm ${currentPage === totalPages ? "text-slate-300" : "bg-slate-100 dark:bg-slate-800"}`}>
+                Next
+              </button>
+            </div>
+
+           
           </div>
 
           {/* Modal for news details and comments */}
