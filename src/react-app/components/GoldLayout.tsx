@@ -1,6 +1,22 @@
-import GoldChart from "./GoldChart";
+import GoldPriceChart from "./GoldPriceChart";
 import MarketStats from "./MarketStat";
 import { Search } from "lucide-react";
+
+
+const sample = [
+  { date: '2025-09-10', vn: 7430000, world: 2265 },
+  { date: '2025-09-15', vn: 7485000, world: 2278 },
+  { date: '2025-09-20', vn: 7510000, world: 2290 },
+  { date: '2025-09-25', vn: 7490000, world: 2283 },
+  { date: '2025-10-01', vn: 7500000, world: 2300 },
+  { date: '2025-10-05', vn: 7555000, world: 2318 },
+  { date: '2025-10-10', vn: 7580000, world: 2330 },
+  { date: '2025-10-20', vn: 7600000, world: 2345 },
+  { date: '2025-10-25', vn: 7590000, world: 2340 },
+  { date: '2025-10-30', vn: 7620000, world: 2352 },
+  { date: '2025-11-01', vn: 7615000, world: 2350 },
+];
+
 
 export default function GoldLayout() {
   return (
@@ -33,24 +49,12 @@ export default function GoldLayout() {
           </div>
 
           <div className="h-96 flex items-center justify-center text-slate-400 dark:text-slate-500 border border-dashed border-slate-100 dark:border-slate-800 rounded-md">
-            {/* Chart placeholder - integrate chart library here */}
-            <GoldChart></GoldChart>
-            {/* <div className="text-center">
-              <div className="text-xl font-semibold text-slate-700 dark:text-white">Chart area</div>
-              <div className="text-sm mt-2">Kết nối với API để vẽ biểu đồ giá vàng</div>
-            </div> */}
+            <div style={{ maxWidth: 1100, minWidth:600, margin: '20px auto', fontFamily: 'Inter, Arial, sans-serif' }}>
+            <GoldPriceChart data={sample} />
+          </div>
           </div>
 
-          <div className="mt-4 grid grid-cols-2 gap-3">
-            <div className="p-3 bg-slate-50 dark:bg-slate-800 rounded-lg">
-              <p className="text-sm text-slate-500 dark:text-slate-400">24h Change</p>
-              <p className="text-lg font-bold text-slate-900 dark:text-white">+0.66%</p>
-            </div>
-            <div className="p-3 bg-slate-50 dark:bg-slate-800 rounded-lg">
-              <p className="text-sm text-slate-500 dark:text-slate-400">Market Cap</p>
-              <p className="text-lg font-bold text-slate-900 dark:text-white">$2.9B</p>
-            </div>
-          </div>
+          
         </div>
       </main>
 
