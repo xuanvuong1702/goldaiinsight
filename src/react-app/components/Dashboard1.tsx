@@ -9,7 +9,7 @@ export default function Dashboards1() {
   const dashboardCards = [
     {
       title: "Portfolio Value",
-      value: "$45,230.50",
+      value: "$45,230",
       change: 12.5,
       icon: Wallet,
       color: "bg-blue-500",

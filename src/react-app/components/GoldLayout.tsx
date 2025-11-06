@@ -1,24 +1,108 @@
+import { useEffect, useMemo, useState } from "react";
 import GoldPriceChart from "./GoldPriceChart";
 import MarketStats from "./MarketStat";
 import { Search } from "lucide-react";
+import NewsModal from "./NewsModal";
 
+const API_URL = "https://phungxuanvuong97.app.n8n.cloud/webhook/chart-data";
 
-const sample = [
-  { date: '2025-09-10', vn: 7430000, world: 2265 },
-  { date: '2025-09-15', vn: 7485000, world: 2278 },
-  { date: '2025-09-20', vn: 7510000, world: 2290 },
-  { date: '2025-09-25', vn: 7490000, world: 2283 },
-  { date: '2025-10-01', vn: 7500000, world: 2300 },
-  { date: '2025-10-05', vn: 7555000, world: 2318 },
-  { date: '2025-10-10', vn: 7580000, world: 2330 },
-  { date: '2025-10-20', vn: 7600000, world: 2345 },
-  { date: '2025-10-25', vn: 7590000, world: 2340 },
-  { date: '2025-10-30', vn: 7620000, world: 2352 },
-  { date: '2025-11-01', vn: 7615000, world: 2350 },
-];
+type ApiItem = {
+  date: string;
+  vn_buy_price?: string;
+  vn_sell_price?: string;
+  usd_sell_in_vnd?: string;
+  usd_buy_in_vnd?: string;
+};
 
+type ChartPoint = {
+  date: string; // YYYY-MM-DD
+  vn: number | null;
+  world: number | null;
+};
+
+function toYYYYMMDD(isoLike: string): string {
+  const d = new Date(isoLike);
+  if (Number.isNaN(d.getTime())) return "";
+  const yyyy = d.getFullYear();
+  const mm = String(d.getMonth() + 1).padStart(2, "0");
+  const dd = String(d.getDate()).padStart(2, "0");
+  return `${yyyy}-${mm}-${dd}`;
+}
+
+function toNumOrNull(v?: string): number | null {
+  if (v == null) return null;
+  const n = Number(v);
+  return Number.isFinite(n) ? n : null;
+}
 
 export default function GoldLayout() {
+  const [data, setData] = useState<ChartPoint[] | null>(null);
+  const [loading, setLoading] = useState<boolean>(false);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    let cancelled = false;
+    async function load() {
+      setLoading(true);
+      setError(null);
+      try {
+        
+
+        const myHeaders = new Headers();
+      myHeaders.append("Content-Type", "application/json");
+
+  
+      const requestOptions = {
+        method: "POST",
+        headers: myHeaders,
+        redirect: "follow",
+      };
+  
+      const res = await fetch(API_URL, requestOptions as RequestInit);
+
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        const json = (await res.json()) as ApiItem[];
+        const mapped: ChartPoint[] = json
+          .map((item) => {
+            const date = toYYYYMMDD(item.date);
+            const vn = toNumOrNull(item.vn_sell_price) ?? toNumOrNull(item.vn_buy_price);
+            const world = toNumOrNull(item.usd_sell_in_vnd) ?? toNumOrNull(item.usd_buy_in_vnd);
+            return date ? { date, vn, world } : null;
+          })
+          .filter((x): x is ChartPoint => !!x);
+
+        if (!cancelled) {
+          // sort ascending by date
+          mapped.sort((a, b) => (a.date < b.date ? -1 : a.date > b.date ? 1 : 0));
+          setData(mapped);
+        }
+      } catch (e: any) {
+        if (!cancelled) setError(e?.message || "Fetch error");
+      } finally {
+        if (!cancelled) setLoading(false);
+      }
+    }
+    load();
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  const hasData = useMemo(() => Array.isArray(data) && data.length > 0, [data]);
+
+  const [modalOpen, setModalOpen] = useState(false);
+  const [selectedArticle, setSelectedArticle] = useState<{ title: string; source?: string; time?: string } | null>(null);
+
+  const openArticle = (item: { title: string; source?: string; time?: string }) => {
+    setSelectedArticle(item);
+    setModalOpen(true);
+  };
+
+  const closeArticle = () => {
+    setModalOpen(false);
+    setSelectedArticle(null);
+  };
+
   return (
     <section className="grid grid-cols-1 lg:grid-cols-12 gap-6 mb-8">
       {/* Left: Performance */}
@@ -49,12 +133,27 @@ export default function GoldLayout() {
           </div>
 
           <div className="h-96 flex items-center justify-center text-slate-400 dark:text-slate-500 border border-dashed border-slate-100 dark:border-slate-800 rounded-md">
-            <div style={{ maxWidth: 1100, minWidth:600, margin: '20px auto', fontFamily: 'Inter, Arial, sans-serif' }}>
-            <GoldPriceChart data={sample} />
+            <div className="mx-auto my-[20px] max-w-[1100px] min-w-[600px] font-sans w-full">
+              {loading && (
+                <div className="text-sm text-slate-500">Đang tải dữ liệu…</div>
+              )}
+              {!loading && error && (
+                <div className="text-sm text-red-500">Không thể tải dữ liệu: {error}</div>
+              )}
+              {!loading && !error && hasData && (
+                <GoldPriceChart
+                  data={data as ChartPoint[]}
+                  vnLabel="Giá vàng VN (VND)"
+                  worldLabel="Giá vàng Thế giới (VND)"
+                  yAxisLeftLabel="VND"
+                  yAxisRightLabel="VND"
+                />
+              )}
+              {!loading && !error && !hasData && (
+                <div className="text-sm text-slate-500">Không có dữ liệu để hiển thị</div>
+              )}
+            </div>
           </div>
-          </div>
-
-          
         </div>
       </main>
 
@@ -81,16 +180,24 @@ export default function GoldLayout() {
                 time: "10 giờ trước",
               },
             ].map((item) => (
-              <article key={item.title} className="p-3 bg-slate-50 dark:bg-slate-800 rounded-md">
+              <button
+                key={item.title}
+                type="button"
+                onClick={() => openArticle(item)}
+                className="w-full text-left p-3 bg-slate-50 dark:bg-slate-800 rounded-md hover:shadow-sm"
+              >
                 <p className="text-sm font-medium text-slate-900 dark:text-white">{item.title}</p>
                 <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">{item.source} · {item.time}</p>
-              </article>
+              </button>
             ))}
           </div>
 
           <div className="mt-4 text-center">
             <button className="px-4 py-2 rounded-md bg-slate-100 dark:bg-slate-800 text-sm">Xem thêm</button>
           </div>
+
+          {/* Modal for news details and comments */}
+          <NewsModal open={modalOpen} onClose={closeArticle} article={selectedArticle} />
         </div>
       </aside>
     </section>
