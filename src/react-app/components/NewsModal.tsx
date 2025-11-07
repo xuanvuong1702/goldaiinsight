@@ -24,7 +24,7 @@ function storageKeyFor(article: Article) {
   return key;
 }
 
-export default function NewsModal({ open, onClose, article }: { open: boolean; onClose: () => void; article: Article | null }) {
+export default function NewsModal({ open, onClose, article, isAuthenticated, onRequireAuth }: { open: boolean; onClose: () => void; article: Article | null; isAuthenticated?: boolean; onRequireAuth?: () => void }) {
   const [comments, setComments] = useState<CommentItem[]>([]);
   const [text, setText] = useState("");
 
@@ -59,6 +59,11 @@ export default function NewsModal({ open, onClose, article }: { open: boolean; o
   if (!open || !article) return null;
 
   const handleAdd = () => {
+    if (!isAuthenticated) {
+      onRequireAuth?.();
+      return;
+    }
+
     const t = text.trim();
     if (!t) return;
     const c: CommentItem = {

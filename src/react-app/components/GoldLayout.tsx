@@ -1,10 +1,13 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import GoldPriceChart from "./GoldPriceChart";
 import MarketStats from "./MarketStat";
 import { Search, ArrowUp, ArrowDown } from "lucide-react";
 import NewsModal from "./NewsModal";
+import LoginModal from "./Login";
+import { useAuth } from "../context/AuthContext";
 
 const API_URL = "https://phungxuanvuong97.app.n8n.cloud/webhook/chart-data";
+const NEWS_API_URL = "https://phungxuanvuong97.app.n8n.cloud/webhook/news";
 
 type ApiItem = {
   date: string;
@@ -104,13 +107,27 @@ export default function GoldLayout() {
   };
 
   // --- News items + voting/tab state ---
+  type NewsApiItem = {
+    id: string;
+    title: string;
+    content: string;
+    created_at: string;
+    updated_at?: string;
+    upvotes_count?: number;
+    downvotes_count?: number;
+    vote_score?: number;
+    source?: string;
+  };
   type NewsItem = {
     id: string;
     title: string;
     source?: string;
     time?: string; // legacy display
-    createdAt: string; // ISO,
+    createdAt: string; // ISO
     content: string;
+    voteScore?: number;
+    upvotes?: number;
+    downvotes?: number;
   };
 
   const initialItems: NewsItem[] = [
@@ -143,11 +160,54 @@ export default function GoldLayout() {
   const [items, setItems] = useState<NewsItem[]>(initialItems);
   const [tab, setTab] = useState<"top" | "newest">("top");
 
+  // Fetch news from API based on tab (top/newest)
+  useEffect(() => {
+    let canceled = false;
+    async function loadNews() {
+      try {
+        const res = await fetch(NEWS_API_URL, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            page_size: 10,
+            page_number: 0,
+            order_by: tab === "top" ? "vote_score" : "created_at",
+          }),
+        } as RequestInit);
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        const json = (await res.json()) as NewsApiItem[];
+        const mapped: NewsItem[] = (Array.isArray(json) ? json : []).map((n) => ({
+          id: n.id,
+          title: n.title,
+          source: n.source,
+          createdAt: n.created_at,
+          content: n.content ?? "",
+          voteScore: typeof n.vote_score === "number" ? n.vote_score : undefined,
+          upvotes: typeof n.upvotes_count === "number" ? n.upvotes_count : undefined,
+          downvotes: typeof n.downvotes_count === "number" ? n.downvotes_count : undefined,
+        }));
+        if (!canceled) {
+          setItems(mapped);
+        }
+      } catch (e) {
+        // ignore errors for now
+      }
+    }
+    loadNews();
+    return () => {
+      canceled = true;
+    };
+  }, [tab]);
+
   type VotesMap = Record<string, { up: number; down: number }>;
   type UserVotesMap = Record<string, "up" | "down" | null>;
 
   const [votes, setVotes] = useState<VotesMap>({});
   const [userVotes, setUserVotes] = useState<UserVotesMap>({});
+  const [showLogin, setShowLogin] = useState(false);
+  const { isAuthenticated } = useAuth();
+  const [hasStoredVotes, setHasStoredVotes] = useState(false);
+  const votesInitializedRef = useRef(false);
 
   const STORAGE_KEY = "news_votes_v1";
 
@@ -158,11 +218,9 @@ export default function GoldLayout() {
         const parsed = JSON.parse(raw);
         setVotes(parsed.votes || {});
         setUserVotes(parsed.userVotes || {});
+        setHasStoredVotes(true);
       } else {
-        // initialize counts to zero for items
-        const init: VotesMap = {};
-        initialItems.forEach((it) => (init[it.id] = { up: 0, down: 0 }));
-        setVotes(init);
+        setHasStoredVotes(false);
       }
     } catch (e) {
       // ignore
@@ -177,7 +235,25 @@ export default function GoldLayout() {
     }
   }, [votes, userVotes]);
 
+  // Initialize local vote counts from server-provided counts once, if no stored votes exist
+  useEffect(() => {
+    if (hasStoredVotes || votesInitializedRef.current) return;
+    if (!items || items.length === 0) return;
+    const init: VotesMap = {};
+    for (const it of items) {
+      const up = typeof it.upvotes === "number" ? it.upvotes : 0;
+      const down = typeof it.downvotes === "number" ? it.downvotes : 0;
+      init[it.id] = { up, down };
+    }
+    setVotes(init);
+    votesInitializedRef.current = true;
+  }, [items, hasStoredVotes]);
+
   function toggleVote(id: string, type: "up" | "down") {
+    if (!isAuthenticated) {
+      setShowLogin(true);
+      return;
+    }
     setVotes((prev) => {
       const cur = prev[id] ?? { up: 0, down: 0 };
       const user = userVotes[id] ?? null;
@@ -228,7 +304,7 @@ export default function GoldLayout() {
   const sortedItems = useMemo(() => {
     const withScore = items.map((it) => ({
       ...it,
-      score: (votes[it.id]?.up ?? 0) - (votes[it.id]?.down ?? 0),
+      score: typeof it.voteScore === "number" ? it.voteScore : ((votes[it.id]?.up ?? 0) - (votes[it.id]?.down ?? 0)),
     }));
     if (tab === "top") {
       return withScore.sort((a, b) => (b.score - a.score) || (new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()));
@@ -406,7 +482,8 @@ export default function GoldLayout() {
           </div>
 
           {/* Modal for news details and comments */}
-          <NewsModal open={modalOpen} onClose={closeArticle} article={selectedArticle} />
+          <NewsModal open={modalOpen} onClose={closeArticle} article={selectedArticle} isAuthenticated={isAuthenticated} onRequireAuth={() => setShowLogin(true)} />
+          <LoginModal isOpen={showLogin} onClose={() => setShowLogin(false)} />
         </div>
       </aside>
     </section>
