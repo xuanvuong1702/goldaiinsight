@@ -49,7 +49,7 @@ export default function GoldLayout() {
         
 
         const myHeaders = new Headers();
-      myHeaders.append("Content-Type", "application/json");
+        myHeaders.append("Content-Type", "application/json");
 
   
       const requestOptions = {
@@ -109,7 +109,8 @@ export default function GoldLayout() {
     title: string;
     source?: string;
     time?: string; // legacy display
-    createdAt: string; // ISO
+    createdAt: string; // ISO,
+    content: string;
   };
 
   const initialItems: NewsItem[] = [
@@ -119,6 +120,7 @@ export default function GoldLayout() {
       source: "Reuters",
       time: "2 giờ trước",
       createdAt: new Date(Date.now() - 2 * 60 * 60 * 1000).toISOString(),
+      content: ''
     },
     {
       id: "news-2",
@@ -126,6 +128,7 @@ export default function GoldLayout() {
       source: "Bloomberg",
       time: "6 giờ trước",
       createdAt: new Date(Date.now() - 6 * 60 * 60 * 1000).toISOString(),
+       content: ''
     },
     {
       id: "news-3",
@@ -133,6 +136,7 @@ export default function GoldLayout() {
       source: "@goldlover",
       time: "10 giờ trước",
       createdAt: new Date(Date.now() - 10 * 60 * 60 * 1000).toISOString(),
+      content: `abc`
     },
   ];
 
