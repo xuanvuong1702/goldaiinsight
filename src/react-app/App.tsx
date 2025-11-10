@@ -2,14 +2,14 @@
 
 import "./App.css";
 import { AuthProvider } from "./context/AuthContext";
-import Dashboards1 from "./components/Dashboard1";
+import { PageLayout } from "./components/CMCLayout";
 
 function App() {
 
   return (
     <AuthProvider>
 
-      <Dashboards1></Dashboards1>
+      <PageLayout children={null}></PageLayout>
 
     </AuthProvider>
   );
