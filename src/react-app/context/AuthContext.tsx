@@ -98,7 +98,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         redirect: "follow",
       };
   
-      const response = await fetch("https://phungxuanvuong97.app.n8n.cloud/webhook/login", requestOptions as RequestInit);
+      const response = await fetch("https://gold-ai-insight.app.n8n.cloud/webhook/login", requestOptions as RequestInit);
 
       const text = await response.text();
 

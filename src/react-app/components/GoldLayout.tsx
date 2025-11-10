@@ -6,8 +6,8 @@ import NewsModal from "./NewsModal";
 import LoginModal from "./Login";
 import { useAuth } from "../context/AuthContext";
 
-const API_URL = "https://phungxuanvuong97.app.n8n.cloud/webhook/chart-data";
-const NEWS_API_URL = "https://phungxuanvuong97.app.n8n.cloud/webhook/news";
+const API_URL = "https://gold-ai-insight.app.n8n.cloud/webhook/chart-data";
+const NEWS_API_URL = "https://gold-ai-insight.app.n8n.cloud/webhook/news";
 
 type ApiItem = {
   date: string;
@@ -131,30 +131,7 @@ export default function GoldLayout() {
   };
 
   const initialItems: NewsItem[] = [
-    {
-      id: "news-1",
-      title: "Vàng tăng do lo ngại lạm phát",
-      source: "Reuters",
-      time: "2 giờ trước",
-      createdAt: new Date(Date.now() - 2 * 60 * 60 * 1000).toISOString(),
-      content: ''
-    },
-    {
-      id: "news-2",
-      title: "Thị trường vàng ổn định trước quyết định lãi suất",
-      source: "Bloomberg",
-      time: "6 giờ trước",
-      createdAt: new Date(Date.now() - 6 * 60 * 60 * 1000).toISOString(),
-       content: ''
-    },
-    {
-      id: "news-3",
-      title: "Tweet: Giá vàng có thể tiếp tục tăng",
-      source: "@goldlover",
-      time: "10 giờ trước",
-      createdAt: new Date(Date.now() - 10 * 60 * 60 * 1000).toISOString(),
-      content: `abc`
-    },
+    
   ];
 
   const [items, setItems] = useState<NewsItem[]>(initialItems);
@@ -169,7 +146,7 @@ export default function GoldLayout() {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
-            page_size: 10,
+            page_size: PER_PAGE,
             page_number: 0,
             order_by: tab === "top" ? "vote_score" : "created_at",
           }),

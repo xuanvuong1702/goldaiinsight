@@ -37,7 +37,7 @@ function parseNumberString(s?: string) {
   return Number.isFinite(n) ? n : null;
 }
 
-const API_URL = "https://phungxuanvuong97.app.n8n.cloud/webhook/gold-performance-usa";
+const API_URL = "https://gold-ai-insight.app.n8n.cloud/webhook/gold-performance-usa";
 
 export default function MarketStats() {
   const [gold, setGold] = useState<ApiPerformanceItem | null>(null);
