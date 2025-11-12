@@ -2,7 +2,6 @@ import Header from "./Header1";
 import { BarChart3, TrendingUp, Wallet, Activity, Search, Info, Menu } from "lucide-react";
 import GoldLayout from "./GoldLayout";
 import { useState } from "react";
-import CoinMarketCapHeader from "./Header2";
 
 export default function Dashboards1() {
   //const { user } = useAuth();
@@ -53,9 +52,11 @@ export default function Dashboards1() {
   ];
 
   return (
-    <div>
-      <CoinMarketCapHeader />
+    <div className="min-h-screen bg-slate-50 dark:bg-slate-950">
+      <Header />
 
+      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        {/* Keep existing Gold layout and Alerts below */}
         <GoldLayout />
 
         <div className="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 p-6">
@@ -72,7 +73,7 @@ export default function Dashboards1() {
             ))}
           </div>
         </div>
-
+      </main>
     </div>
   );
 }
