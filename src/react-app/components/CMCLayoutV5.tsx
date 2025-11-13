@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import { TrendingUp, TrendingDown, Search, Bell, Menu, Globe, FileText, Twitter, Facebook, MessageCircle, ExternalLink, ChevronDown, Star, Share2 } from 'lucide-react';
+import { useAuth } from "../context/AuthContext";
 
 // Mock data for markets and posts
 const marketsData = [
@@ -47,33 +48,42 @@ const SearchBar = () => (
   </div>
 );
 
-const UserMenu = () => (
-  <div className="flex items-center gap-2">
-    <button className="hidden md:flex items-center gap-1 px-3 py-2 text-sm hover:bg-gray-100 rounded-lg">
-      <span>Portfolio</span>
-    </button>
-    <button className="hidden md:flex items-center gap-1 px-3 py-2 text-sm hover:bg-gray-100 rounded-lg">
-      <span>Watchlist</span>
-    </button>
-    <button className="p-2 hover:bg-gray-100 rounded-lg">
-      <Bell className="w-5 h-5 text-gray-600" />
-    </button>
-    <button className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 font-medium text-sm">
-      Log In
-    </button>
-    <button className="p-2 hover:bg-gray-100 rounded-lg lg:hidden">
-      <Menu className="w-5 h-5 text-gray-600" />
-    </button>
-  </div>
-);
+const UserMenu = ({ onLoginClick }: { onLoginClick: () => void }) => {
+  const { isAuthenticated, user, logout } = useAuth();
+  return (
+    <div className="flex items-center gap-2">
+      <button className="hidden md:flex items-center gap-1 px-3 py-2 text-sm hover:bg-gray-100 rounded-lg">
+        <span>Portfolio</span>
+      </button>
+      <button className="hidden md:flex items-center gap-1 px-3 py-2 text-sm hover:bg-gray-100 rounded-lg">
+        <span>Watchlist</span>
+      </button>
+      <button className="p-2 hover:bg-gray-100 rounded-lg">
+        <Bell className="w-5 h-5 text-gray-600" />
+      </button>
+      {isAuthenticated ? (
+        <button onClick={logout} className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 font-medium text-sm">
+          Log Out
+        </button>
+      ) : (
+        <button onClick={onLoginClick} className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 font-medium text-sm">
+          Log In
+        </button>
+      )}
+      <button className="p-2 hover:bg-gray-100 rounded-lg lg:hidden">
+        <Menu className="w-5 h-5 text-gray-600" />
+      </button>
+    </div>
+  );
+};
 
-const Header = () => (
+const Header = ({ onLoginClick }: { onLoginClick: () => void }) => (
   <header className="bg-white border-b border-gray-200 sticky top-0 z-50">
     <div className="max-w-[1920px] mx-auto px-4 py-3 flex items-center justify-between">
       <Logo />
       <NavMenu />
       <SearchBar />
-      <UserMenu />
+      <UserMenu onLoginClick={onLoginClick} />
     </div>
   </header>
 );
@@ -452,6 +462,84 @@ const SentimentBar = () => (
 );
 
 
+type AuthMode = 'login' | 'register';
+
+const AuthModal = ({ isOpen, mode, onClose, onSwitchMode }: { isOpen: boolean; mode: AuthMode; onClose: () => void; onSwitchMode: (mode: AuthMode) => void; }) => {
+  const { login, register, isLoading, error } = useAuth();
+  const [name, setName] = useState('');
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [confirm, setConfirm] = useState('');
+  const [localError, setLocalError] = useState<string | null>(null);
+
+  if (!isOpen) return null;
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setLocalError(null);
+    try {
+      if (mode === 'register') {
+        if (password !== confirm) {
+          setLocalError('Mật khẩu xác nhận không khớp');
+          return;
+        }
+        await register(name, email, password);
+      } else {
+        await login(email, password);
+      }
+      onClose();
+    } catch {
+    }
+  };
+
+  return (
+    <div className="fixed inset-0 z-50 overflow-y-auto" role="dialog" aria-modal="true" aria-labelledby="auth-modal-title" onClick={onClose}>
+      <div className="fixed inset-0 bg-gray-500/50 bg-opacity-75 transition-opacity" />
+      <div className="flex items-center justify-center min-h-screen px-4 py-6" onClick={(e) => e.stopPropagation()}>
+        <div className="relative bg-white rounded-lg shadow-xl max-w-md w-full z-50">
+          <div className="px-6 py-4 border-b border-gray-200 rounded-t-lg flex items-center justify-between">
+            <h3 id="auth-modal-title" className="text-lg font-semibold">{mode === 'login' ? 'Đăng nhập' : 'Đăng ký'}</h3>
+            <button onClick={onClose} className="text-gray-400 hover:text-gray-600">✕</button>
+          </div>
+          <form onSubmit={handleSubmit} className="px-6 py-6 space-y-4">
+            {mode === 'register' && (
+              <div>
+                <label className="block text-sm text-gray-600 mb-1">Họ tên</label>
+                <input value={name} onChange={(e) => setName(e.target.value)} type="text" required className="w-full px-3 py-2 bg-gray-100 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
+              </div>
+            )}
+            <div>
+              <label className="block text-sm text-gray-600 mb-1">Email</label>
+              <input value={email} onChange={(e) => setEmail(e.target.value)} type="email" required className="w-full px-3 py-2 bg-gray-100 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
+            </div>
+            <div>
+              <label className="block text-sm text-gray-600 mb-1">Mật khẩu</label>
+              <input value={password} onChange={(e) => setPassword(e.target.value)} type="password" required className="w-full px-3 py-2 bg-gray-100 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
+            </div>
+            {mode === 'register' && (
+              <div>
+                <label className="block text-sm text-gray-600 mb-1">Xác nhận mật khẩu</label>
+                <input value={confirm} onChange={(e) => setConfirm(e.target.value)} type="password" required className="w-full px-3 py-2 bg-gray-100 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
+              </div>
+            )}
+            {(localError || error) && <div className="text-sm text-red-600">{localError || error}</div>}
+            <button type="submit" disabled={isLoading} className="w-full px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 font-medium text-sm disabled:opacity-50">
+              {isLoading ? 'Đang xử lý...' : (mode === 'login' ? 'Đăng nhập' : 'Đăng ký')}
+            </button>
+            <div className="text-center text-sm text-gray-600">
+              {mode === 'login' ? (
+                <button type="button" onClick={() => onSwitchMode('register')} className="text-blue-600 hover:underline">Chưa có tài khoản? Đăng ký</button>
+              ) : (
+                <button type="button" onClick={() => onSwitchMode('login')} className="text-blue-600 hover:underline">Đã có tài khoản? Đăng nhập</button>
+              )}
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+  );
+};
+
 const NewsModalV4 = ({ isOpen, onClose, article }) => {
   if (!isOpen || !article) return null;
 
@@ -671,6 +759,8 @@ export default function App() {
   const sectionsRef = useRef({});
    const [isModalOpen, setIsModalOpen] = useState(false);
  const [selectedArticle, setSelectedArticle] = useState(null);
+  const [isAuthOpen, setIsAuthOpen] = useState(false);
+  const [authMode, setAuthMode] = useState<AuthMode>('login');
 
    const handleArticleClick = (article) => {
     setSelectedArticle(article);
@@ -811,9 +901,16 @@ export default function App() {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      <Header />
-      
-      <NewsModalV4 
+      <Header onLoginClick={() => { setAuthMode('login'); setIsAuthOpen(true); }} />
+
+      <AuthModal
+        isOpen={isAuthOpen}
+        mode={authMode}
+        onClose={() => setIsAuthOpen(false)}
+        onSwitchMode={(m) => setAuthMode(m)}
+      />
+
+      <NewsModalV4
         isOpen={isModalOpen}
         onClose={handleCloseModal}
         article={selectedArticle}
